@@ -37,60 +37,60 @@ The first place to start is to look at the app.coffee file in the root folder:
 
 
 
-        connectRoute      = require 'connect-route'
-        http              = require 'http'
-        ss                = require 'socketstream'
-        internals         = require './server/internals'
-        
-        # Define a single-page client
-        ss.client.define 'main',
-          view: 'app.jade'
-          css:  ['libs', 'app.styl']
-          code: ['libs', 'app']
-          tmpl: '*'
-        
-        api = require "#{__dirname}/server/api"
-        
-        ss.http.middleware.prepend ss.http.connect.bodyParser()
-        ss.http.middleware.prepend ss.http.connect.query()
-        ss.http.middleware.prepend connectRoute api
-        
-        # Serve this client on the root URL
-        ss.http.route '/', (req, res) -> res.serveClient 'main'
-        
-        # Use redis for session store
-        ss.session.store.use 'redis', ss.api.app.config.redis
-        
-        # Use redis for pubsub
-        ss.publish.transport.use 'redis', ss.api.app.config.redis
-        
-        # Code Formatters
-        ss.client.formatters.add require 'ss-coffee'
-        ss.client.formatters.add require 'ss-jade'
-        ss.client.formatters.add require 'ss-stylus'
-        
-        # Use server-side compiled Hogan (Mustache) templates. Other engines available
-        ss.client.templateEngine.use require 'ss-hogan'
-        
-        # Minimize and pack assets if you type: SS_PACK=1 SS_ENV=production node app.js
-        ss.client.packAssets ss.api.app.config.packAssets if ss.env is 'production'
-        
-        # Start SocketStream
-        server = http.Server ss.http.middleware
-        server.listen ss.api.app.config.port
-        ss.start server
-        
-        # So that the process never dies
-        process.on 'uncaughtException', (err) -> console.error 'Exception caught: ', err
+    connectRoute      = require 'connect-route'
+    http              = require 'http'
+    ss                = require 'socketstream'
+    internals         = require './server/internals'
+    
+    # Define a single-page client
+    ss.client.define 'main',
+      view: 'app.jade'
+      css:  ['libs', 'app.styl']
+      code: ['libs', 'app']
+      tmpl: '*'
+    
+    api = require "#{__dirname}/server/api"
+    
+    ss.http.middleware.prepend ss.http.connect.bodyParser()
+    ss.http.middleware.prepend ss.http.connect.query()
+    ss.http.middleware.prepend connectRoute api
+    
+    # Serve this client on the root URL
+    ss.http.route '/', (req, res) -> res.serveClient 'main'
+    
+    # Use redis for session store
+    ss.session.store.use 'redis', ss.api.app.config.redis
+    
+    # Use redis for pubsub
+    ss.publish.transport.use 'redis', ss.api.app.config.redis
+    
+    # Code Formatters
+    ss.client.formatters.add require 'ss-coffee'
+    ss.client.formatters.add require 'ss-jade'
+    ss.client.formatters.add require 'ss-stylus'
+    
+    # Use server-side compiled Hogan (Mustache) templates. Other engines available
+    ss.client.templateEngine.use require 'ss-hogan'
+    
+    # Minimize and pack assets if you type: SS_PACK=1 SS_ENV=production node app.js
+    ss.client.packAssets ss.api.app.config.packAssets if ss.env is 'production'
+    
+    # Start SocketStream
+    server = http.Server ss.http.middleware
+    server.listen ss.api.app.config.port
+    ss.start server
+    
+    # So that the process never dies
+    process.on 'uncaughtException', (err) -> console.error 'Exception caught: ', err
 
 __Dependencies__
 
 Let's take a look at the first couple of lines of code:
 
-        connectRoute      = require 'connect-route'
-        http              = require 'http'
-        ss                = require 'socketstream'
-        internals         = require './server/internals'
+    connectRoute      = require 'connect-route'
+    http              = require 'http'
+    ss                = require 'socketstream'
+    internals         = require './server/internals'
 
 In the first couple of lines, we're loading Node.js libraries that we depend upon via [npm](http://npmjs.org).
 
@@ -135,9 +135,9 @@ We will take a look at that file later TODO - provide link to breakdown of what 
 
 You'll notice these lines as well:
 
-        ss.http.middleware.prepend ss.http.connect.bodyParser()
-        ss.http.middleware.prepend ss.http.connect.query()
-        ss.http.middleware.prepend connectRoute api
+    ss.http.middleware.prepend ss.http.connect.bodyParser()
+    ss.http.middleware.prepend ss.http.connect.query()
+    ss.http.middleware.prepend connectRoute api
 
 SocketStream provides an API to prepend/append connect middleware to the stack, around the set of middleware that SocketStream loads in by default. The lines above are used for adding connect middleware that take care of the following:
 
@@ -145,8 +145,28 @@ SocketStream provides an API to prepend/append connect middleware to the stack, 
 - Parsing HTTP query parameters (for identifying RESTful resources)
 - loading the REST API into the connect-route middleware
 
-SocketStream's default middleware are the following:
+These middleware items are loaded before SocketStream's default middleware stack, which is the following:
 
 - Connect CookieParser
 - Connect FavIcon
 - Connect SessionStore
+
+If you wish to add middleware items into the stack _after_ the default stack, then call the middleware like this:
+
+    ss.http.middleware.append(MIDDLEWARE);
+
+__Serving clients__
+
+SocketStream includes a basic HTTP server binding that handles GET requests at given routes, like this:
+
+    # Serve this client on the root URL
+    ss.http.route '/', (req, res) -> res.serveClient 'main'
+
+The line above tell's SocketStream's wrapper around Node's HTTP API to serve a specific client called 'main'. The serveClient function is appended to the HTTP Response object by SocketStream, and you'll notice that the value 'main' matches the name of the client we specified earlier on in the app.coffe file.
+
+__Session Storage__
+
+    # Use redis for session store
+    ss.session.store.use 'redis', ss.api.app.config.redis
+
+SocketStream provides 2 options for how you store session data: in memory, or in Redis. Here, we use the Redis session store, and pass the Redis configuration to the session store. The way in which we access this configuration is called via SocketStream's API object, which allows us to bind collections of functions and data onto SocketStream for use in other parts of our application.
