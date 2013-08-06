@@ -170,3 +170,46 @@ __Session Storage__
     ss.session.store.use 'redis', ss.api.app.config.redis
 
 SocketStream provides 2 options for how you store session data: in memory, or in Redis. Here, we use the Redis session store, and pass the Redis configuration to the session store. The way in which we access this configuration is called via SocketStream's API object, which allows us to bind collections of functions and data onto SocketStream for use in other parts of our application.
+
+The reason to store session data in Redis is so that you can persist the data across multiple instances of Dashku, as well as to maintain session state if the process running Dashku is terminated (i.e for deployments). 
+
+__Publish/Subscribe__
+
+    # Use redis for pubsub
+    ss.publish.transport.use 'redis', ss.api.app.config.redis
+
+SocketStream has 2 ways that you can support publish/subscribe: via in-memory, or via Redis. If you're running Dashku as a single process, then in-memory is fine, but the moment that you need to run Dashku on multiple processes, then you will want to use Redis to handle SocketStream's publish/subscribe data transmission.
+
+__Code Formatters__
+
+SocketStream supports writing your application using langauges that compile into other formats. Dashku has been written using a combination of CoffeeScript, Jade, and Stylus. In order to support the use of these code formatters, we require some npm modules that handle converting the pre-processed code into it's web format (CoffeeScript -> JavaScript, Jade -> HTML, Stylus -> CSS):
+
+    # Code Formatters
+    ss.client.formatters.add require 'ss-coffee'
+    ss.client.formatters.add require 'ss-jade'
+    ss.client.formatters.add require 'ss-stylus'
+
+You be interested to know that other variants exist: ss-gorilla is available for the GorillaScript language, ss-coffeekup for HTML templates, and ss-less for using Less as a CSS preprocessor.
+
+__Client-Side HTML Template engine__
+
+    # Use server-side compiled Hogan (Mustache) templates. Other engines available
+    ss.client.templateEngine.use require 'ss-hogan'
+
+To support the Single Page App setup, Client-Side HTML templates are compiled on the server side, and sent up to the client as functions that can be called with data for injecting into the template. In our case, we use a wrapper of Twitter's Hogan.js library to handle the compilation of client-side HTML templates. Later on we will show you how this is used in the app.
+
+__Asset Packing__
+
+When you want to serve Dashku in production, we call a code feature in SocketStream called Asset Packing. Asset Packing will do the following things:
+
+- Concatenate your CSS and JavaScript files into single files
+- Use GZIP for reducing the file size of those files
+- Dynamically handle changing the head link and script tags to point to these files
+
+
+    # Minimize and pack assets if you type: SS_PACK=1 SS_ENV=production node app.js
+    ss.client.packAssets ss.api.app.config.packAssets if ss.env is 'production'
+
+The line above will call ss.client.packAssets if the app is running in production mode, using the packAssets configuration as detailed in the config.coffee file in the root folder.
+
+
