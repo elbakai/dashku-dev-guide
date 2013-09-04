@@ -162,7 +162,7 @@ SocketStream includes a basic HTTP server binding that handles GET requests at g
     # Serve this client on the root URL
     ss.http.route '/', (req, res) -> res.serveClient 'main'
 
-The line above tell's SocketStream's wrapper around Node's HTTP API to serve a specific client called 'main'. The serveClient function is appended to the HTTP Response object by SocketStream, and you'll notice that the value 'main' matches the name of the client we specified earlier on in the app.coffe file.
+The line above tell's SocketStream's wrapper around Node's HTTP API to serve a specific client called 'main'. The serveClient function is appended to the HTTP Response object by SocketStream, and you'll notice that the value 'main' matches the name of the client we specified earlier on in the app.coffee file.
 
 __Session Storage__
 
@@ -182,7 +182,7 @@ SocketStream has 2 ways that you can support publish/subscribe: via in-memory, o
 
 __Code Formatters__
 
-SocketStream supports writing your application using langauges that compile into other formats. Dashku has been written using a combination of CoffeeScript, Jade, and Stylus. In order to support the use of these code formatters, we require some npm modules that handle converting the pre-processed code into it's web format (CoffeeScript -> JavaScript, Jade -> HTML, Stylus -> CSS):
+SocketStream supports writing your application using langauges that compile into other formats. Dashku has been written using a combination of CoffeeScript, Jade, and Stylus. In order to support the use of these code formatters, we require some npm modules that handle converting the pre-processed code into it's web format (CoffeeScript into JavaScript, Jade into HTML, Stylus into CSS):
 
     # Code Formatters
     ss.client.formatters.add require 'ss-coffee'
@@ -196,15 +196,15 @@ __Client-Side HTML Template engine__
     # Use server-side compiled Hogan (Mustache) templates. Other engines available
     ss.client.templateEngine.use require 'ss-hogan'
 
-To support the Single Page App setup, Client-Side HTML templates are compiled on the server side, and sent up to the client as functions that can be called with data for injecting into the template. In our case, we use a wrapper of Twitter's Hogan.js library to handle the compilation of client-side HTML templates. Later on we will show you how this is used in the app.
+To support the Single Page App setup, client-side HTML templates are compiled on the server side, and sent up to the client as functions that can be called with data for injecting into the template. In our case, we use a wrapper of Twitter's Hogan.js library to handle the compilation of client-side HTML templates. Later on we will show you how this is used in the app.
 
 __Asset Packing__
 
 When you want to serve Dashku in production, we call a code feature in SocketStream called Asset Packing. Asset Packing will do the following things:
 
-- Concatenate your CSS and JavaScript files into single files
-- Use GZIP for reducing the file size of those files
-- Dynamically handle changing the head link and script tags to point to these files
+- Concatenate your CSS and JavaScript files into single files, so that your app gets served in as few HTTP requests as possible.
+- Use GZIP for reducing the file size of those files, so that they download in a shorter period of time.
+- Dynamically handle changing the link and script tags inside the html head tag, so that they load these files.
 
 
     # Minimize and pack assets if you type: SS_PACK=1 SS_ENV=production node app.js
@@ -212,4 +212,22 @@ When you want to serve Dashku in production, we call a code feature in SocketStr
 
 The line above will call ss.client.packAssets if the app is running in production mode, using the packAssets configuration as detailed in the config.coffee file in the root folder.
 
+__Starting the server__
 
+The next 3 lines (after the comment line) handle starting the SocketStream application:
+
+    # Start SocketStream
+    server = http.Server ss.http.middleware
+    server.listen ss.api.app.config.port
+    ss.start server
+
+The 1st line loads a Node HTTP server with SocketStream's collection of connectJS middleware. The 2nd line makes the server listen on a prot number, specified in SocketStream's server/config.coffee file. The 3rd line tells SocketStream to start with the HTTP server loaded. This handles binding the Websocket server onto the HTTP server.
+
+__Exception handling__
+
+In order to prevent the Node.js process from exiting on an error, this line is used:
+
+    # So that the process never dies
+    process.on 'uncaughtException', (err) -> console.error 'Exception caught: ', err
+
+This is a naive form of error handling which will intercept any unhandled errors that occur in the application. If you have setup your app to run with a service monitoring tool like upstart, then you won't need it.
