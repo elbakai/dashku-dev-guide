@@ -26,7 +26,7 @@ Dashku uses a set of technologies that are listed below:
 Getting Started
 ---
 
-The first action that I can recommend is to get a copy of the codebase from Github, and foliow the installation instructions in the Readme file.
+The first action that I can recommend is to get a copy of the codebase from Github, and follow the installation instructions in the Readme file.
 
 Install the app, boot it up, and play with it for a bit. Once you've done that, I'll guide you in the next section through the codebase.
 
